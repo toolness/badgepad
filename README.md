@@ -1,6 +1,6 @@
-This is a simple command-line tool to issue badges as static files that
-can be served from Apache, Amazon S3, or anything else that serves
-static content.
+This is a simple command-line tool to issue [Open Badges][] as static
+files that can be served from Apache, Amazon S3, or anything else that
+serves static content.
 
 It's inspired by [jekyll][].
 
@@ -104,6 +104,7 @@ If you followed the quick start instructions above and want to work on
 badgepad itself, you can find its git repository at
 `.virtualenv/src/badgepad`.
 
+  [Open Badges]: http://openbadges.org/
   [jekyll]: http://jekyllrb.com/
   [virtualenv]: http://www.virtualenv.org/
   [slug]: http://en.wikipedia.org/wiki/Clean_URL#Slug
