@@ -1,0 +1,5 @@
+#! /usr/bin/env python
+
+import badgepad.cmdline
+
+badgepad.cmdline.main()
