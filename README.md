@@ -77,7 +77,7 @@ issuance metadata and evidence information.
 ### Building Static Files
 
 All that's left is to build some JSON files and HTML pages and deploy
-them to the Web. You can do this by running:
+them to the Web. Build everything by running:
 
 ```
 $ badgepad build
