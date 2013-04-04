@@ -62,7 +62,8 @@ of the file:
   bar: Bar Jones <bar@jones.com>
 ```
 
-The name before the colon is a URL-friendly slug for the recipient.
+The name before the colon is a URL-friendly slug, or nickname, for
+the recipient.
 
 Now, if we want to issue the Foo badge to Bar Jones, we run:
 
