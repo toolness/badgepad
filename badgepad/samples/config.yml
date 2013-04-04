@@ -1,0 +1,7 @@
+issuer:
+  name: Foo Bar
+  url: http://badges.bar.org
+  email: foo@bar.org
+recipients:
+  # Add badge recipients here.
+  pat: Pat Person <pat@person.com>

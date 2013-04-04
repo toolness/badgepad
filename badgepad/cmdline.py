@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import json
 import glob
@@ -11,9 +12,16 @@ import jinja2
 import yaml
 import markdown
 
+def pkg_path(*args):
+    return os.path.join(PKG_ROOT, *args)
+
 def path(*args):
     return os.path.join(ROOT, *args)
 
+def relpath(abspath):
+    return os.path.relpath(abspath, ROOT)
+
+PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.getcwd())
 DIST_DIR = path('dist')
 STATIC_DIR = path('static')
@@ -118,12 +126,7 @@ def process_badge_classes(jinja_env, issuer):
         write_data(criteria_html, badges_dir, '%s.html' % basename)
     return classes
 
-def cmd_build(args):
-    """
-    Build website.
-    """
-
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATES_DIR))
+def load_config():
     config = yaml.load(open('config.yml').read())
 
     for recipient, address in config['recipients'].items():
@@ -133,7 +136,18 @@ def cmd_build(args):
             'email': parts[1]
         }
 
+    return config
+
+def cmd_build(args):
+    """
+    Build website.
+    """
+
+    env = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATES_DIR))
+    config = load_config()
+
     if os.path.exists(DIST_DIR):
+        print "Removing existing '%s' dir." % relpath(DIST_DIR)
         shutil.rmtree(DIST_DIR)
 
     print "Copying static files."
@@ -148,12 +162,87 @@ def cmd_build(args):
     process_assertions(env, config['issuer'],
                        config['recipients'], badge_classes)
 
+    print "Done. Static website is in the '%s' dir." % relpath(DIST_DIR)
+
+def cmd_init(args):
+    """
+    Initialize new project directory.
+    """
+
+    if os.path.exists(path('config.yml')):
+        print "The current directory already contains a project."
+        sys.exit(1)
+
+    print "Generating config.yml."
+    shutil.copy(pkg_path('samples', 'config.yml'), ROOT)
+
+    print "Creating empty directories."
+    os.mkdir(path('assertions'))
+    os.mkdir(path('badges'))
+    os.mkdir(path('static'))
+
+    print "Creating default templates."
+    shutil.copytree(pkg_path('samples', 'templates'), TEMPLATES_DIR)
+
     print "Done."
+
+def cmd_newbadge(args):
+    """
+    Create a new badge type.
+    """
+
+    filename = path(BADGES_DIR, '%s.yml' % args.name)
+    if os.path.exists(filename):
+        print "That badge already exists."
+        sys.exit(1)
+
+    shutil.copy(pkg_path('samples', 'badge.yml'), filename)
+    print "Created %s." % relpath(filename)
+
+    pngfile = relpath(path(BADGES_DIR, '%s.png' % args.name))
+    print "To give the badge an image, copy a PNG file to %s." % pngfile
+
+def cmd_issue(args):
+    """
+    Issue a badge to a recipient.
+    """
+
+    basename = '%s.%s' % (args.recipient, args.badge)
+    filename = path(ASSERTIONS_DIR, '%s.yml' % basename)
+
+    if not os.path.exists(path(BADGES_DIR, '%s.yml' % args.badge)):
+        print "The badge '%s' does not exist." % args.badge
+        sys.exit(1)
+
+    if args.recipient not in load_config()['recipients']:
+        print "The recipient '%s' does not exist." % args.recipient
+        sys.exit(1)
+
+    if os.path.exists(filename):
+        print "That badge has already been issued to that recipient."
+        sys.exit(1)
+
+    shutil.copy(pkg_path('samples', 'assertion.yml'), filename)
+    print "Created %s." % relpath(filename)
 
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
+
     build = subparsers.add_parser('build', help=cmd_build.__doc__)
     build.set_defaults(func=cmd_build)
+
+    init = subparsers.add_parser('init', help=cmd_init.__doc__)
+    init.set_defaults(func=cmd_init)
+
+    newbadge = subparsers.add_parser('newbadge', help=cmd_newbadge.__doc__)
+    newbadge.add_argument('name')
+    newbadge.set_defaults(func=cmd_newbadge)
+
+    issue = subparsers.add_parser('issue', help=cmd_issue.__doc__)
+    issue.add_argument('recipient')
+    issue.add_argument('badge')
+    issue.set_defaults(func=cmd_issue)
+
     args = parser.parse_args()
     args.func(args)
