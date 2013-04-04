@@ -10,6 +10,5 @@ setup(
     url='http://pypi.python.org/pypi/Badgepad/',
     license='LICENSE.txt',
     description='Issue Open Badges as static files.',
-    long_description=open('README.rst').read(),
     install_requires=open('requirements.txt').readlines()
 )
