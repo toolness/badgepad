@@ -104,6 +104,9 @@ If you followed the quick start instructions above and want to work on
 badgepad itself, you can find its git repository at
 `.virtualenv/src/badgepad`.
 
+The test suite can be run with `python -m unittest discover` from the
+root of the repository.
+
   [Open Badges]: http://openbadges.org/
   [jekyll]: http://jekyllrb.com/
   [virtualenv]: http://www.virtualenv.org/

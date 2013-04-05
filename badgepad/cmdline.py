@@ -132,7 +132,7 @@ def process_badge_classes(jinja_env, issuer):
     return classes
 
 def load_config():
-    config = yaml.load(open('config.yml').read())
+    config = yaml.load(open(path('config.yml')).read())
 
     for recipient, address in config['recipients'].items():
         parts = email.utils.parseaddr(address)
@@ -230,7 +230,7 @@ def cmd_issue(args):
     shutil.copy(pkg_path('samples', 'assertion.yml'), filename)
     print "Created %s." % relpath(filename)
 
-def main():
+def main(arglist=None):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-r', '--root-dir', help='root project directory',
@@ -253,6 +253,6 @@ def main():
     issue.add_argument('badge')
     issue.set_defaults(func=cmd_issue)
 
-    args = parser.parse_args()
+    args = parser.parse_args(arglist)
     set_root(args.root_dir)
     args.func(args)
