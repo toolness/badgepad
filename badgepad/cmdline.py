@@ -119,7 +119,7 @@ def cmd_issue(project, args):
     basename = '%s.%s' % (args.recipient, args.badge)
     filename = project.path('assertions', '%s.yml' % basename)
 
-    if not project.exists('badges', '%s.yml' % args.badge):
+    if not args.badge in project.badges:
         log("The badge '%s' does not exist." % args.badge)
         sys.exit(1)
 
