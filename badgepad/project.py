@@ -8,6 +8,10 @@ from markdown import markdown
 
 from .obi import hashed_id
 
+class Bunch:
+    def __init__(self, *args, **kwargs):
+        self.__dict__.update(kwargs)
+
 class Assertion(object):
     def __init__(self, project, filename):
         self.project = project
@@ -28,7 +32,7 @@ class Assertion(object):
         json['badge'] = self.badge_class.json_url
         if 'issuedOn' not in json:
             json['issuedOn'] = int(os.stat(filename).st_ctime)
-        json['recipient'] = hashed_id(self.recipient['email'], self.basename)
+        json['recipient'] = hashed_id(self.recipient.email, self.basename)
         json['evidence'] = project.absurl('/assertions/%s.html' % \
                                           self.basename)
         json['verify'] = {
@@ -134,10 +138,8 @@ class Project(object):
 
             for recipient, address in config['recipients'].items():
                 parts = email.utils.parseaddr(address)
-                config['recipients'][recipient] = {
-                    'name': parts[0],
-                    'email': parts[1]
-                }
+                config['recipients'][recipient] = Bunch(name=parts[0],
+                                                        email=parts[1])
 
             self.__config = config
 
