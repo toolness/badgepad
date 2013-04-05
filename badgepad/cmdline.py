@@ -3,7 +3,6 @@ import sys
 import shutil
 import hashlib
 import argparse
-from urlparse import urljoin
 
 import jinja2
 import markdown
@@ -37,7 +36,6 @@ def hashed_id(recipient, salt):
 def process_assertions(project, jinja_env, badge_classes):
     issuer = project.config['issuer']
     recipients = project.config['recipients']
-    absurl = lambda x: urljoin(issuer['url'], x)
 
     template = jinja_env.get_template('assertion.html')
     assertions_dir = project.path('dist', 'assertions')
@@ -63,10 +61,10 @@ def process_assertions(project, jinja_env, badge_classes):
         if 'issuedOn' not in metadata:
             metadata['issuedOn'] = int(os.stat(abspath).st_ctime)
         metadata['recipient'] = hashed_id(recipients[recipient], basename)
-        metadata['evidence'] = absurl('/assertions/%s.html' % basename)
+        metadata['evidence'] = project.absurl('/assertions/%s.html' % basename)
         metadata['verify'] = {
             'type': 'hosted',
-            'url': absurl('/assertions/%s.json' % basename)
+            'url': project.absurl('/assertions/%s.json' % basename)
         }
         project.write_data(metadata, assertions_dir, '%s.json' % basename)
 
@@ -81,7 +79,6 @@ def process_assertions(project, jinja_env, badge_classes):
 
 def process_badge_classes(project, jinja_env):
     issuer = project.config['issuer']
-    absurl = lambda x: urljoin(issuer['url'], x)
 
     classes = {}
     template = jinja_env.get_template('badge.html')
@@ -93,17 +90,17 @@ def process_badge_classes(project, jinja_env):
         data = project.read_yaml(filename)
         metadata = data.next()
         if os.path.exists(img_filename):
-            metadata['image'] = absurl('/badges/%s.png' % basename)
+            metadata['image'] = project.absurl('/badges/%s.png' % basename)
             shutil.copy(img_filename, badges_dir)
-        metadata['issuer'] = absurl('/issuer.json')
-        metadata['criteria'] = absurl('/badges/%s.html' % basename)
+        metadata['issuer'] = project.absurl('/issuer.json')
+        metadata['criteria'] = project.absurl('/badges/%s.html' % basename)
         project.write_data(metadata, badges_dir, '%s.json' % basename)
 
         context = {}
         context.update(metadata)
         context['criteriaHtml'] = markdown.markdown(data.next(),
                                                     output_format='html5')
-        context['url'] = absurl('/badges/%s.json' % basename)
+        context['url'] = project.absurl('/badges/%s.json' % basename)
         classes[basename] = context
         criteria_html = template.render(**context)
         project.write_data(criteria_html, badges_dir, '%s.html' % basename)

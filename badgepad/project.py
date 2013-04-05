@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+import urlparse
 import email.utils
 
 import yaml
@@ -29,6 +30,9 @@ class Project(object):
 
     def listdir(self, *filename):
         return os.listdir(self.path(*filename))
+
+    def absurl(self, url):
+        return urlparse.urljoin(self.config['issuer']['url'], url)
 
     @property
     def config(self):
