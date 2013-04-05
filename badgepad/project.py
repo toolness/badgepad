@@ -1,6 +1,5 @@
 import os
 import glob
-import json
 import urlparse
 import email.utils
 
@@ -9,7 +8,6 @@ import yaml
 class Project(object):
     def __init__(self, root_dir):
         self.ROOT = os.path.abspath(root_dir)
-        self.DIST_DIR = self.path('dist')
         self.STATIC_DIR = self.path('static')
         self.BADGES_DIR = self.path('badges')
         self.ASSERTIONS_DIR = self.path('assertions')
@@ -52,12 +50,3 @@ class Project(object):
 
     def read_yaml(self, *filename):
         return yaml.load_all(open(self.path(*filename)))
-
-    def write_data(self, data, *filename):
-        abspath = self.path(self.DIST_DIR, *filename)
-        f = open(abspath, 'w')
-        if abspath.endswith('.json'):
-            json.dump(data, f, sort_keys=True, indent=True)
-        else:
-            f.write(data)
-        f.close()

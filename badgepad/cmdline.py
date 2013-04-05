@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import json
 import argparse
 
 import jinja2
@@ -23,13 +24,22 @@ class UnknownBadgeError(KeyError):
 class UnknownRecipientError(KeyError):
     pass
 
-def process_assertions(project, jinja_env, badge_classes):
+def write_data(data, *filename):
+    abspath = os.path.join(*filename)
+    f = open(abspath, 'w')
+    if abspath.endswith('.json'):
+        json.dump(data, f, sort_keys=True, indent=True)
+    else:
+        f.write(data)
+    f.close()
+
+def process_assertions(project, jinja_env, badge_classes, dest_dir):
+    dest_dir = os.path.join(dest_dir, 'assertions')
     issuer = project.config['issuer']
     recipients = project.config['recipients']
 
     template = jinja_env.get_template('assertion.html')
-    assertions_dir = project.path('dist', 'assertions')
-    os.mkdir(assertions_dir)
+    os.mkdir(dest_dir)
     for filename in project.listdir('assertions'):
         abspath = project.path('assertions', filename)
         data = project.read_yaml(abspath)
@@ -56,7 +66,7 @@ def process_assertions(project, jinja_env, badge_classes):
             'type': 'hosted',
             'url': project.absurl('/assertions/%s.json' % basename)
         }
-        project.write_data(metadata, assertions_dir, '%s.json' % basename)
+        write_data(metadata, dest_dir, '%s.json' % basename)
 
         context = {}
         context.update(metadata)
@@ -65,15 +75,15 @@ def process_assertions(project, jinja_env, badge_classes):
         context['evidenceHtml'] = markdown.markdown(evidence_markdown,
                                                     output_format='html5')
         evidence_html = template.render(**context)
-        project.write_data(evidence_html, assertions_dir, '%s.html' % basename)
+        write_data(evidence_html, dest_dir, '%s.html' % basename)
 
-def process_badge_classes(project, jinja_env):
+def process_badge_classes(project, jinja_env, dest_dir):
+    dest_dir = os.path.join(dest_dir, 'badges')
     issuer = project.config['issuer']
 
     classes = {}
     template = jinja_env.get_template('badge.html')
-    badges_dir = project.path('dist', 'badges')
-    os.mkdir(badges_dir)
+    os.mkdir(dest_dir)
     for filename in project.glob('badges', '*.yml'):
         basename = os.path.basename(os.path.splitext(filename)[0])
         img_filename = project.path('badges', '%s.png' % basename)
@@ -81,10 +91,10 @@ def process_badge_classes(project, jinja_env):
         metadata = data.next()
         if os.path.exists(img_filename):
             metadata['image'] = project.absurl('/badges/%s.png' % basename)
-            shutil.copy(img_filename, badges_dir)
+            shutil.copy(img_filename, dest_dir)
         metadata['issuer'] = project.absurl('/issuer.json')
         metadata['criteria'] = project.absurl('/badges/%s.html' % basename)
-        project.write_data(metadata, badges_dir, '%s.json' % basename)
+        write_data(metadata, dest_dir, '%s.json' % basename)
 
         context = {}
         context.update(metadata)
@@ -93,7 +103,7 @@ def process_badge_classes(project, jinja_env):
         context['url'] = project.absurl('/badges/%s.json' % basename)
         classes[basename] = context
         criteria_html = template.render(**context)
-        project.write_data(criteria_html, badges_dir, '%s.html' % basename)
+        write_data(criteria_html, dest_dir, '%s.html' % basename)
     return classes
 
 def cmd_build(project, args):
@@ -103,21 +113,22 @@ def cmd_build(project, args):
 
     loader = jinja2.FileSystemLoader(project.TEMPLATES_DIR)
     env = jinja2.Environment(loader=loader)
+    dest_dir = project.path('dist')
 
-    if project.exists('dist'):
-        log("Removing existing '%s' dir." % project.relpath('dist'))
-        shutil.rmtree(project.DIST_DIR)
+    if os.path.exists(dest_dir):
+        log("Removing %s." % dest_dir)
+        shutil.rmtree(dest_dir)
 
     log("Copying static files.")
-    shutil.copytree(project.STATIC_DIR, project.DIST_DIR)
+    shutil.copytree(project.STATIC_DIR, dest_dir)
 
-    project.write_data(project.config['issuer'], 'issuer.json')
+    write_data(project.config['issuer'], dest_dir, 'issuer.json')
 
     log("Processing badge classes.")
-    badge_classes = process_badge_classes(project, env)
+    badge_classes = process_badge_classes(project, env, dest_dir)
 
     log("Processing assertions.")
-    process_assertions(project, env, badge_classes)
+    process_assertions(project, env, badge_classes, dest_dir)
 
     log("Done. Static website is in the '%s' dir." % project.relpath('dist'))
 
