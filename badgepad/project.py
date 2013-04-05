@@ -33,11 +33,11 @@ class BadgeAssertion(object):
         if 'issuedOn' not in json:
             json['issuedOn'] = int(os.stat(filename).st_ctime)
         json['recipient'] = hashed_id(self.recipient.email, self.basename)
-        json['evidence'] = project.absurl('/assertions/%s.html' % \
+        json['evidence'] = project.absurl('assertions/%s.html' % \
                                           self.basename)
         json['verify'] = {
             'type': 'hosted',
-            'url': project.absurl('/assertions/%s.json' % self.basename)
+            'url': project.absurl('assertions/%s.json' % self.basename)
         }
         self.json = json
         self.__context = None
@@ -81,10 +81,10 @@ class BadgeClass(object):
         data = project.read_yaml(filename)
         json = data.next()
         if os.path.exists(self.img_filename):
-            json['image'] = project.absurl('/badges/%s.png' % self.basename)
-        json['issuer'] = project.absurl('/issuer.json')
-        json['criteria'] = project.absurl('/badges/%s.html' % self.basename)
-        self.json_url = project.absurl('/badges/%s.json' % self.basename)
+            json['image'] = project.absurl('badges/%s.png' % self.basename)
+        json['issuer'] = project.absurl('issuer.json')
+        json['criteria'] = project.absurl('badges/%s.html' % self.basename)
+        self.json_url = project.absurl('badges/%s.json' % self.basename)
         self.json = json
 
         self.criteria_markdown = data.next()
