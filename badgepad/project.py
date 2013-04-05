@@ -136,6 +136,9 @@ class Project(object):
         if not self.__config:
             config = yaml.load(open(self.path('config.yml')).read())
 
+            if not config['issuer']['url'].endswith('/'):
+                config['issuer']['url'] += '/'
+
             for recipient, address in config['recipients'].items():
                 parts = email.utils.parseaddr(address)
                 config['recipients'][recipient] = Bunch(name=parts[0],
