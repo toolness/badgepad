@@ -12,6 +12,9 @@ import jinja2
 import yaml
 import markdown
 
+def log(text):
+    sys.stdout.write(text + '\n')
+
 def pkg_path(*args):
     return os.path.join(PKG_ROOT, *args)
 
@@ -152,22 +155,22 @@ def cmd_build(args):
     config = load_config()
 
     if os.path.exists(DIST_DIR):
-        print "Removing existing '%s' dir." % relpath(DIST_DIR)
+        log("Removing existing '%s' dir." % relpath(DIST_DIR))
         shutil.rmtree(DIST_DIR)
 
-    print "Copying static files."
+    log("Copying static files.")
     shutil.copytree(STATIC_DIR, DIST_DIR)
 
     write_data(config['issuer'], 'issuer.json')
 
-    print "Processing badge classes."
+    log("Processing badge classes.")
     badge_classes = process_badge_classes(env, config['issuer'])
 
-    print "Processing assertions."
+    log("Processing assertions.")
     process_assertions(env, config['issuer'],
                        config['recipients'], badge_classes)
 
-    print "Done. Static website is in the '%s' dir." % relpath(DIST_DIR)
+    log("Done. Static website is in the '%s' dir." % relpath(DIST_DIR))
 
 def cmd_init(args):
     """
@@ -175,21 +178,21 @@ def cmd_init(args):
     """
 
     if os.path.exists(path('config.yml')):
-        print "The current directory already contains a project."
+        log("The current directory already contains a project.")
         sys.exit(1)
 
-    print "Generating config.yml."
+    log("Generating config.yml.")
     shutil.copy(pkg_path('samples', 'config.yml'), ROOT)
 
-    print "Creating empty directories."
+    log("Creating empty directories.")
     os.mkdir(path('assertions'))
     os.mkdir(path('badges'))
     os.mkdir(path('static'))
 
-    print "Creating default templates."
+    log("Creating default templates.")
     shutil.copytree(pkg_path('samples', 'templates'), TEMPLATES_DIR)
 
-    print "Done."
+    log("Done.")
 
 def cmd_newbadge(args):
     """
@@ -198,14 +201,14 @@ def cmd_newbadge(args):
 
     filename = path(BADGES_DIR, '%s.yml' % args.name)
     if os.path.exists(filename):
-        print "That badge already exists."
+        log("That badge already exists.")
         sys.exit(1)
 
     shutil.copy(pkg_path('samples', 'badge.yml'), filename)
-    print "Created %s." % relpath(filename)
+    log("Created %s." % relpath(filename))
 
     pngfile = relpath(path(BADGES_DIR, '%s.png' % args.name))
-    print "To give the badge an image, copy a PNG file to %s." % pngfile
+    log("To give the badge an image, copy a PNG file to %s." % pngfile)
 
 def cmd_issue(args):
     """
@@ -216,19 +219,19 @@ def cmd_issue(args):
     filename = path(ASSERTIONS_DIR, '%s.yml' % basename)
 
     if not os.path.exists(path(BADGES_DIR, '%s.yml' % args.badge)):
-        print "The badge '%s' does not exist." % args.badge
+        log("The badge '%s' does not exist." % args.badge)
         sys.exit(1)
 
     if args.recipient not in load_config()['recipients']:
-        print "The recipient '%s' does not exist." % args.recipient
+        log("The recipient '%s' does not exist." % args.recipient)
         sys.exit(1)
 
     if os.path.exists(filename):
-        print "That badge has already been issued to that recipient."
+        log("That badge has already been issued to that recipient.")
         sys.exit(1)
 
     shutil.copy(pkg_path('samples', 'assertion.yml'), filename)
-    print "Created %s." % relpath(filename)
+    log("Created %s." % relpath(filename))
 
 def main(arglist=None):
     parser = argparse.ArgumentParser()
