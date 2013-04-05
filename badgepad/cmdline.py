@@ -1,39 +1,20 @@
 import os
 import sys
 import shutil
-import json
-import glob
 import hashlib
 import argparse
-import email.utils
 from urlparse import urljoin
 
 import jinja2
-import yaml
 import markdown
+
+from .project import Project
 
 def log(text):
     sys.stdout.write(text + '\n')
 
 def pkg_path(*args):
     return os.path.join(PKG_ROOT, *args)
-
-def path(*args):
-    return os.path.join(ROOT, *args)
-
-def relpath(abspath):
-    return os.path.relpath(abspath, ROOT)
-
-def set_root(pathname):
-    global ROOT, DIST_DIR, STATIC_DIR, BADGES_DIR, ASSERTIONS_DIR
-    global TEMPLATES_DIR
-
-    ROOT = os.path.abspath(pathname)
-    DIST_DIR = path('dist')
-    STATIC_DIR = path('static')
-    BADGES_DIR = path('badges')
-    ASSERTIONS_DIR = path('assertions')
-    TEMPLATES_DIR = path('templates')
 
 PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -42,15 +23,6 @@ class UnknownBadgeError(KeyError):
 
 class UnknownRecipientError(KeyError):
     pass
-
-def write_data(data, *filename):
-    abspath = path(DIST_DIR, *filename)
-    f = open(abspath, 'w')
-    if abspath.endswith('.json'):
-        json.dump(data, f, sort_keys=True, indent=True)
-    else:
-        f.write(data)
-    f.close()
 
 def hashed_id(recipient, salt):
     email = recipient['email']
@@ -62,15 +34,17 @@ def hashed_id(recipient, salt):
     idobj['identity'] = 'sha256$' + hashlib.sha256(email + salt).hexdigest()
     return idobj
 
-def process_assertions(jinja_env, issuer, recipients, badge_classes):
+def process_assertions(project, jinja_env, badge_classes):
+    issuer = project.config['issuer']
+    recipients = project.config['recipients']
     absurl = lambda x: urljoin(issuer['url'], x)
 
     template = jinja_env.get_template('assertion.html')
-    assertions_dir = path(DIST_DIR, 'assertions')
+    assertions_dir = project.path('dist', 'assertions')
     os.mkdir(assertions_dir)
-    for filename in os.listdir(ASSERTIONS_DIR):
-        abspath = path(ASSERTIONS_DIR, filename)
-        data = yaml.load_all(open(abspath))
+    for filename in project.listdir('assertions'):
+        abspath = project.path('assertions', filename)
+        data = project.read_yaml(abspath)
         try:
             metadata = data.next()
             evidence_markdown = data.next()
@@ -94,7 +68,7 @@ def process_assertions(jinja_env, issuer, recipients, badge_classes):
             'type': 'hosted',
             'url': absurl('/assertions/%s.json' % basename)
         }
-        write_data(metadata, assertions_dir, '%s.json' % basename)
+        project.write_data(metadata, assertions_dir, '%s.json' % basename)
 
         context = {}
         context.update(metadata)
@@ -103,26 +77,27 @@ def process_assertions(jinja_env, issuer, recipients, badge_classes):
         context['evidenceHtml'] = markdown.markdown(evidence_markdown,
                                                     output_format='html5')
         evidence_html = template.render(**context)
-        write_data(evidence_html, assertions_dir, '%s.html' % basename)
+        project.write_data(evidence_html, assertions_dir, '%s.html' % basename)
 
-def process_badge_classes(jinja_env, issuer):
+def process_badge_classes(project, jinja_env):
+    issuer = project.config['issuer']
     absurl = lambda x: urljoin(issuer['url'], x)
 
     classes = {}
     template = jinja_env.get_template('badge.html')
-    badges_dir = path(DIST_DIR, 'badges')
+    badges_dir = project.path('dist', 'badges')
     os.mkdir(badges_dir)
-    for filename in glob.glob(path(BADGES_DIR, '*.yml')):
+    for filename in project.glob('badges', '*.yml'):
         basename = os.path.basename(os.path.splitext(filename)[0])
-        img_filename = path(BADGES_DIR, '%s.png' % basename)
-        data = yaml.load_all(open(filename))
+        img_filename = project.path('badges', '%s.png' % basename)
+        data = project.read_yaml(filename)
         metadata = data.next()
         if os.path.exists(img_filename):
             metadata['image'] = absurl('/badges/%s.png' % basename)
             shutil.copy(img_filename, badges_dir)
         metadata['issuer'] = absurl('/issuer.json')
         metadata['criteria'] = absurl('/badges/%s.html' % basename)
-        write_data(metadata, badges_dir, '%s.json' % basename)
+        project.write_data(metadata, badges_dir, '%s.json' % basename)
 
         context = {}
         context.update(metadata)
@@ -131,98 +106,85 @@ def process_badge_classes(jinja_env, issuer):
         context['url'] = absurl('/badges/%s.json' % basename)
         classes[basename] = context
         criteria_html = template.render(**context)
-        write_data(criteria_html, badges_dir, '%s.html' % basename)
+        project.write_data(criteria_html, badges_dir, '%s.html' % basename)
     return classes
 
-def load_config():
-    config = yaml.load(open(path('config.yml')).read())
-
-    for recipient, address in config['recipients'].items():
-        parts = email.utils.parseaddr(address)
-        config['recipients'][recipient] = {
-            'name': parts[0],
-            'email': parts[1]
-        }
-
-    return config
-
-def cmd_build(args):
+def cmd_build(project, args):
     """
     Build website.
     """
 
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(TEMPLATES_DIR))
-    config = load_config()
+    loader = jinja2.FileSystemLoader(project.TEMPLATES_DIR)
+    env = jinja2.Environment(loader=loader)
 
-    if os.path.exists(DIST_DIR):
-        log("Removing existing '%s' dir." % relpath(DIST_DIR))
-        shutil.rmtree(DIST_DIR)
+    if project.exists('dist'):
+        log("Removing existing '%s' dir." % project.relpath('dist'))
+        shutil.rmtree(project.DIST_DIR)
 
     log("Copying static files.")
-    shutil.copytree(STATIC_DIR, DIST_DIR)
+    shutil.copytree(project.STATIC_DIR, project.DIST_DIR)
 
-    write_data(config['issuer'], 'issuer.json')
+    project.write_data(project.config['issuer'], 'issuer.json')
 
     log("Processing badge classes.")
-    badge_classes = process_badge_classes(env, config['issuer'])
+    badge_classes = process_badge_classes(project, env)
 
     log("Processing assertions.")
-    process_assertions(env, config['issuer'],
-                       config['recipients'], badge_classes)
+    process_assertions(project, env, badge_classes)
 
-    log("Done. Static website is in the '%s' dir." % relpath(DIST_DIR))
+    log("Done. Static website is in the '%s' dir." % project.relpath('dist'))
 
-def cmd_init(args):
+def cmd_init(project, args):
     """
     Initialize new project directory.
     """
 
-    if os.path.exists(path('config.yml')):
+    if project.exists('config.yml'):
         log("The current directory already contains a project.")
         sys.exit(1)
 
     log("Generating config.yml.")
-    shutil.copy(pkg_path('samples', 'config.yml'), ROOT)
+    shutil.copy(pkg_path('samples', 'config.yml'), project.ROOT)
 
     log("Creating empty directories.")
-    os.mkdir(path('assertions'))
-    os.mkdir(path('badges'))
-    os.mkdir(path('static'))
+    os.mkdir(project.path('assertions'))
+    os.mkdir(project.path('badges'))
+    os.mkdir(project.path('static'))
 
     log("Creating default templates.")
-    shutil.copytree(pkg_path('samples', 'templates'), TEMPLATES_DIR)
+    shutil.copytree(pkg_path('samples', 'templates'), project.TEMPLATES_DIR)
 
     log("Done.")
 
-def cmd_newbadge(args):
+def cmd_newbadge(project, args):
     """
     Create a new badge type.
     """
 
-    filename = path(BADGES_DIR, '%s.yml' % args.name)
+    filename = project.path('badges', '%s.yml' % args.name)
     if os.path.exists(filename):
         log("That badge already exists.")
         sys.exit(1)
 
     shutil.copy(pkg_path('samples', 'badge.yml'), filename)
-    log("Created %s." % relpath(filename))
+    log("Created %s." % project.relpath(filename))
 
-    pngfile = relpath(path(BADGES_DIR, '%s.png' % args.name))
+    pngfile = project.relpath('badges', '%s.png' % args.name)
     log("To give the badge an image, copy a PNG file to %s." % pngfile)
 
-def cmd_issue(args):
+def cmd_issue(project, args):
     """
     Issue a badge to a recipient.
     """
 
     basename = '%s.%s' % (args.recipient, args.badge)
-    filename = path(ASSERTIONS_DIR, '%s.yml' % basename)
+    filename = project.path('assertions', '%s.yml' % basename)
 
-    if not os.path.exists(path(BADGES_DIR, '%s.yml' % args.badge)):
+    if not project.exists('badges', '%s.yml' % args.badge):
         log("The badge '%s' does not exist." % args.badge)
         sys.exit(1)
 
-    if args.recipient not in load_config()['recipients']:
+    if args.recipient not in project.config['recipients']:
         log("The recipient '%s' does not exist." % args.recipient)
         sys.exit(1)
 
@@ -231,7 +193,7 @@ def cmd_issue(args):
         sys.exit(1)
 
     shutil.copy(pkg_path('samples', 'assertion.yml'), filename)
-    log("Created %s." % relpath(filename))
+    log("Created %s." % project.relpath(filename))
 
 def main(arglist=None):
     parser = argparse.ArgumentParser()
@@ -257,5 +219,4 @@ def main(arglist=None):
     issue.set_defaults(func=cmd_issue)
 
     args = parser.parse_args(arglist)
-    set_root(args.root_dir)
-    args.func(args)
+    args.func(Project(args.root_dir), args)
