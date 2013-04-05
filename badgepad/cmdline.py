@@ -1,12 +1,12 @@
 import os
 import sys
 import shutil
-import hashlib
 import argparse
 
 import jinja2
 import markdown
 
+from .obi import hashed_id
 from .project import Project
 
 def log(text):
@@ -22,16 +22,6 @@ class UnknownBadgeError(KeyError):
 
 class UnknownRecipientError(KeyError):
     pass
-
-def hashed_id(recipient, salt):
-    email = recipient['email']
-    idobj = {
-        'type': 'email',
-        'hashed': True
-    }
-    idobj['salt'] = salt
-    idobj['identity'] = 'sha256$' + hashlib.sha256(email + salt).hexdigest()
-    return idobj
 
 def process_assertions(project, jinja_env, badge_classes):
     issuer = project.config['issuer']
