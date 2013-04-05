@@ -39,7 +39,10 @@ class SmokeTest(unittest.TestCase):
 
         self.cmdline('issue', 'lol', 'foo')
         self.assertTrue('Created assertions/lol.foo.yml.' in self.loglines)
-        self.assertPathExists('assertions', 'lol.foo.yml')
+
+        assertion = open(self.path('assertions', 'lol.foo.yml'), 'a')
+        assertion.write(u'o yea \u2026'.encode('utf-8'))
+        assertion.close()
 
         self.cmdline('build')
         self.assertPathExists('dist', 'assertions', 'lol.foo.html')

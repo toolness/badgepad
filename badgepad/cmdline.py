@@ -30,6 +30,8 @@ def write_data(data, *filename):
     if abspath.endswith('.json'):
         json.dump(data, f, sort_keys=True, indent=True)
     else:
+        if isinstance(data, unicode):
+            data = data.encode('utf-8')
         f.write(data)
     f.close()
 
