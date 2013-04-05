@@ -126,6 +126,11 @@ class Project(object):
     def absurl(self, url):
         return urlparse.urljoin(self.config['issuer']['url'], url)
 
+    def set_base_url(self, url):
+        self.config['issuer']['url'] = url
+        if not self.config['issuer']['url'].endswith('/'):
+            self.config['issuer']['url'] += '/'
+
     @property
     def assertions(self):
         for filename in self.glob('assertions', '*.yml'):
@@ -136,15 +141,13 @@ class Project(object):
         if not self.__config:
             config = yaml.load(open(self.path('config.yml')).read())
 
-            if not config['issuer']['url'].endswith('/'):
-                config['issuer']['url'] += '/'
-
             for recipient, address in config['recipients'].items():
                 parts = email.utils.parseaddr(address)
                 config['recipients'][recipient] = Bunch(name=parts[0],
                                                         email=parts[1])
 
             self.__config = config
+            self.set_base_url(config['issuer']['url'])
 
         return self.__config
 

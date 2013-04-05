@@ -56,6 +56,9 @@ def cmd_build(project, args):
     env = jinja2.Environment(loader=loader)
     dest_dir = project.path('dist')
 
+    if args.base_url:
+        project.set_base_url(args.base_url)
+
     if os.path.exists(dest_dir):
         log("Removing %s." % dest_dir)
         shutil.rmtree(dest_dir)
@@ -143,6 +146,7 @@ def main(arglist=None):
     subparsers = parser.add_subparsers()
 
     build = subparsers.add_parser('build', help=cmd_build.__doc__)
+    build.add_argument('-u', '--base-url', help='alternate base URL')
     build.set_defaults(func=cmd_build)
 
     init = subparsers.add_parser('init', help=cmd_init.__doc__)
