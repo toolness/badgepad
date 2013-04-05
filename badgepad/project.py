@@ -12,7 +12,7 @@ class Bunch:
     def __init__(self, *args, **kwargs):
         self.__dict__.update(kwargs)
 
-class Assertion(object):
+class BadgeAssertion(object):
     def __init__(self, project, filename):
         self.project = project
         self.filename = filename
@@ -129,7 +129,7 @@ class Project(object):
     @property
     def assertions(self):
         for filename in self.glob('assertions', '*.yml'):
-            yield Assertion(self, filename)
+            yield BadgeAssertion(self, filename)
 
     @property
     def config(self):
