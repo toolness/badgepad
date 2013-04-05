@@ -5,9 +5,7 @@ import json
 import argparse
 
 import jinja2
-import markdown
 
-from .obi import hashed_id
 from .project import Project
 
 def log(text):
@@ -17,12 +15,6 @@ def pkg_path(*args):
     return os.path.join(PKG_ROOT, *args)
 
 PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
-
-class UnknownBadgeError(KeyError):
-    pass
-
-class UnknownRecipientError(KeyError):
-    pass
 
 def write_data(data, *filename):
     abspath = os.path.join(*filename)
@@ -35,78 +27,25 @@ def write_data(data, *filename):
         f.write(data)
     f.close()
 
-def process_assertions(project, jinja_env, badge_classes, dest_dir):
-    dest_dir = os.path.join(dest_dir, 'assertions')
-    issuer = project.config['issuer']
-    recipients = project.config['recipients']
-
+def export_assertions(project, jinja_env, base_dest_dir):
+    dest_dir = os.path.join(base_dest_dir, 'assertions')
     template = jinja_env.get_template('assertion.html')
     os.mkdir(dest_dir)
-    for filename in project.listdir('assertions'):
-        abspath = project.path('assertions', filename)
-        data = project.read_yaml(abspath)
-        try:
-            metadata = data.next()
-            evidence_markdown = data.next()
-        except StopIteration:
-            evidence_markdown = metadata
-            metadata = {}
-        basename = os.path.splitext(filename)[0]
-        recipient, badge_class = basename.split('.')
-        if badge_class not in badge_classes:
-            raise UnknownBadgeError(badge_class)
-        if recipient not in recipients:
-            raise UnknownRecipientError(recipient)
-        badge_class = badge_classes[badge_class]
-        metadata['uid'] = basename
-        metadata['badge'] = badge_class['url']
-        if 'issuedOn' not in metadata:
-            metadata['issuedOn'] = int(os.stat(abspath).st_ctime)
-        metadata['recipient'] = hashed_id(recipients[recipient], basename)
-        metadata['evidence'] = project.absurl('/assertions/%s.html' % basename)
-        metadata['verify'] = {
-            'type': 'hosted',
-            'url': project.absurl('/assertions/%s.json' % basename)
-        }
-        write_data(metadata, dest_dir, '%s.json' % basename)
+    for assn in project.assertions:
+        write_data(assn.json, dest_dir, '%s.json' % assn.basename)
+        evidence_html = template.render(**assn.context)
+        write_data(evidence_html, dest_dir, '%s.html' % assn.basename)
 
-        context = {}
-        context.update(metadata)
-        context['badge'] = badge_class
-        context['recipient'] = recipients[recipient]
-        context['evidenceHtml'] = markdown.markdown(evidence_markdown,
-                                                    output_format='html5')
-        evidence_html = template.render(**context)
-        write_data(evidence_html, dest_dir, '%s.html' % basename)
-
-def process_badge_classes(project, jinja_env, dest_dir):
-    dest_dir = os.path.join(dest_dir, 'badges')
-    issuer = project.config['issuer']
-
-    classes = {}
+def export_badge_classes(project, jinja_env, base_dest_dir):
+    dest_dir = os.path.join(base_dest_dir, 'badges')
     template = jinja_env.get_template('badge.html')
     os.mkdir(dest_dir)
-    for filename in project.glob('badges', '*.yml'):
-        basename = os.path.basename(os.path.splitext(filename)[0])
-        img_filename = project.path('badges', '%s.png' % basename)
-        data = project.read_yaml(filename)
-        metadata = data.next()
-        if os.path.exists(img_filename):
-            metadata['image'] = project.absurl('/badges/%s.png' % basename)
-            shutil.copy(img_filename, dest_dir)
-        metadata['issuer'] = project.absurl('/issuer.json')
-        metadata['criteria'] = project.absurl('/badges/%s.html' % basename)
-        write_data(metadata, dest_dir, '%s.json' % basename)
-
-        context = {}
-        context.update(metadata)
-        context['criteriaHtml'] = markdown.markdown(data.next(),
-                                                    output_format='html5')
-        context['url'] = project.absurl('/badges/%s.json' % basename)
-        classes[basename] = context
-        criteria_html = template.render(**context)
-        write_data(criteria_html, dest_dir, '%s.html' % basename)
-    return classes
+    for badge in project.badges:
+        if 'image' in badge.json:
+            shutil.copy(badge.img_filename, dest_dir)
+        write_data(badge.json, dest_dir, '%s.json' % badge.basename)
+        criteria_html = template.render(**badge.context)
+        write_data(criteria_html, dest_dir, '%s.html' % badge.basename)
 
 def cmd_build(project, args):
     """
@@ -126,11 +65,11 @@ def cmd_build(project, args):
 
     write_data(project.config['issuer'], dest_dir, 'issuer.json')
 
-    log("Processing badge classes.")
-    badge_classes = process_badge_classes(project, env, dest_dir)
+    log("Exporting badge classes.")
+    export_badge_classes(project, env, dest_dir)
 
-    log("Processing assertions.")
-    process_assertions(project, env, badge_classes, dest_dir)
+    log("Exporting assertions.")
+    export_assertions(project, env, dest_dir)
 
     log("Done. Static website is in the '%s' dir." % project.relpath('dist'))
 

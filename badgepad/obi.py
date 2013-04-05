@@ -1,7 +1,6 @@
 import hashlib
 
-def hashed_id(recipient, salt):
-    email = recipient['email']
+def hashed_id(email, salt):
     idobj = {
         'type': 'email',
         'hashed': True
