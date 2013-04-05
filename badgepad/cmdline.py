@@ -21,13 +21,18 @@ def path(*args):
 def relpath(abspath):
     return os.path.relpath(abspath, ROOT)
 
+def set_root(pathname):
+    global ROOT, DIST_DIR, STATIC_DIR, BADGES_DIR, ASSERTIONS_DIR
+    global TEMPLATES_DIR
+
+    ROOT = os.path.abspath(pathname)
+    DIST_DIR = path('dist')
+    STATIC_DIR = path('static')
+    BADGES_DIR = path('badges')
+    ASSERTIONS_DIR = path('assertions')
+    TEMPLATES_DIR = path('templates')
+
 PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.abspath(os.getcwd())
-DIST_DIR = path('dist')
-STATIC_DIR = path('static')
-BADGES_DIR = path('badges')
-ASSERTIONS_DIR = path('assertions')
-TEMPLATES_DIR = path('templates')
 
 class UnknownBadgeError(KeyError):
     pass
@@ -227,6 +232,10 @@ def cmd_issue(args):
 
 def main():
     parser = argparse.ArgumentParser()
+
+    parser.add_argument('-r', '--root-dir', help='root project directory',
+                        default='.')
+
     subparsers = parser.add_subparsers()
 
     build = subparsers.add_parser('build', help=cmd_build.__doc__)
@@ -245,4 +254,5 @@ def main():
     issue.set_defaults(func=cmd_issue)
 
     args = parser.parse_args()
+    set_root(args.root_dir)
     args.func(args)
