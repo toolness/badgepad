@@ -7,6 +7,16 @@ path = lambda *x: os.path.join(ROOT, *x)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SAMPLE_PROJECT = path('sample-project')
 
+class BadgeClassTests(unittest.TestCase):
+    def testWithoutImageWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        self.assertTrue('image' not in proj.badges['no-img'].json)
+
+    def testWithImageWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        self.assertEqual(proj.badges['img'].json['image'],
+                         'http://foo.org/badges/img.png')
+
 class BadgeAssertionTests(unittest.TestCase):
     def testYamlWithoutMetadataWorks(self):
         proj = Project(SAMPLE_PROJECT)

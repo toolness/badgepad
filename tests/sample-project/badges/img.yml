@@ -1,0 +1,9 @@
+name: Image
+description: >
+  This badge has an image associated with it.
+
+---
+
+# This is the criteria content, as markdown.
+
+Image here.
