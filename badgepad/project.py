@@ -42,6 +42,10 @@ class BadgeAssertion(object):
         recipient, badge_class = self.basename.split('.')
         self.recipient = project.config['recipients'][recipient]
         self.badge_class = project.badges[badge_class]
+        self.paths = {
+            'html': ('assertions', recipient, '%s.html' % badge_class),
+            'json': ('assertions', recipient, '%s.json' % badge_class),
+        }
 
         data = project.read_yaml(filename)
         try:
@@ -55,11 +59,10 @@ class BadgeAssertion(object):
         if 'issuedOn' not in json:
             json['issuedOn'] = int(os.stat(filename).st_ctime)
         json['recipient'] = hashed_id(self.recipient.email, self.basename)
-        json['evidence'] = project.absurl('assertions/%s.html' % \
-                                          self.basename)
+        json['evidence'] = project.absurl(*self.paths['html'])
         json['verify'] = {
             'type': 'hosted',
-            'url': project.absurl('assertions/%s.json' % self.basename)
+            'url': project.absurl(*self.paths['json'])
         }
         self.json = json
         self.__context = None
@@ -149,7 +152,8 @@ class Project(object):
     def open(self, *filename):
         return open(self.path(*filename))
 
-    def absurl(self, url):
+    def absurl(self, *url):
+        url = '/'.join(url)
         return urlparse.urljoin(self.config['issuer']['url'], url)
 
     def set_base_url(self, url):

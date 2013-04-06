@@ -18,6 +18,9 @@ PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def write_data(data, *filename):
     abspath = os.path.join(*filename)
+    dirname = os.path.dirname(abspath)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     f = open(abspath, 'w')
     if abspath.endswith('.json'):
         json.dump(data, f, sort_keys=True, indent=True)
@@ -28,24 +31,21 @@ def write_data(data, *filename):
     f.close()
 
 def export_assertions(project, jinja_env, base_dest_dir):
-    dest_dir = os.path.join(base_dest_dir, 'assertions')
     template = jinja_env.get_template('assertion.html')
-    os.mkdir(dest_dir)
     for assn in project.assertions:
-        write_data(assn.json, dest_dir, '%s.json' % assn.basename)
+        write_data(assn.json, base_dest_dir, *assn.paths['json'])
         evidence_html = template.render(**assn.context)
-        write_data(evidence_html, dest_dir, '%s.html' % assn.basename)
+        write_data(evidence_html, base_dest_dir, *assn.paths['html'])
 
 def export_badge_classes(project, jinja_env, base_dest_dir):
     dest_dir = os.path.join(base_dest_dir, 'badges')
     template = jinja_env.get_template('badge.html')
-    os.mkdir(dest_dir)
     for badge in project.badges:
-        if 'image' in badge.json:
-            shutil.copy(badge.img_filename, dest_dir)
         write_data(badge.json, dest_dir, '%s.json' % badge.basename)
         criteria_html = template.render(**badge.context)
         write_data(criteria_html, dest_dir, '%s.html' % badge.basename)
+        if 'image' in badge.json:
+            shutil.copy(badge.img_filename, dest_dir)
 
 def cmd_build(project, args):
     """

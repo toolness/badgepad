@@ -45,7 +45,7 @@ class SmokeTest(unittest.TestCase):
         assertion.close()
 
         self.cmdline('build')
-        self.assertPathExists('dist', 'assertions', 'lol.foo.html')
-        self.assertPathExists('dist', 'assertions', 'lol.foo.json')
+        self.assertPathExists('dist', 'assertions', 'lol', 'foo.html')
+        self.assertPathExists('dist', 'assertions', 'lol', 'foo.json')
         self.assertPathExists('dist', 'badges', 'foo.json')
         self.assertPathExists('dist', 'issuer.json')
