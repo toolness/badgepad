@@ -1,0 +1,4 @@
+issuer:
+  url: http://foo.org
+recipients:
+  foo: Foo <foo@bar.org>
