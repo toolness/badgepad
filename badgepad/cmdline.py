@@ -38,14 +38,14 @@ def export_assertions(project, jinja_env, base_dest_dir):
         write_data(evidence_html, base_dest_dir, *assn.paths['html'])
 
 def export_badge_classes(project, jinja_env, base_dest_dir):
-    dest_dir = os.path.join(base_dest_dir, 'badges')
     template = jinja_env.get_template('badge.html')
     for badge in project.badges:
-        write_data(badge.json, dest_dir, '%s.json' % badge.basename)
+        write_data(badge.json, base_dest_dir, *badge.paths['json'])
         criteria_html = template.render(**badge.context)
-        write_data(criteria_html, dest_dir, '%s.html' % badge.basename)
+        write_data(criteria_html, base_dest_dir, *badge.paths['html'])
         if 'image' in badge.json:
-            shutil.copy(badge.img_filename, dest_dir)
+            shutil.copy(badge.img_filename,
+                        os.path.join(base_dest_dir, *badge.paths['png']))
 
 def cmd_build(project, args):
     """
