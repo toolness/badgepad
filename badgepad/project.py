@@ -123,6 +123,9 @@ class Project(object):
     def glob(self, *filename):
         return glob.glob(self.path(*filename))
 
+    def open(self, *filename):
+        return open(self.path(*filename))
+
     def absurl(self, url):
         return urlparse.urljoin(self.config['issuer']['url'], url)
 
@@ -139,7 +142,7 @@ class Project(object):
     @property
     def config(self):
         if not self.__config:
-            config = yaml.load(open(self.path('config.yml')).read())
+            config = yaml.load(self.open('config.yml').read())
 
             for recipient, address in config['recipients'].items():
                 parts = email.utils.parseaddr(address)
@@ -152,4 +155,4 @@ class Project(object):
         return self.__config
 
     def read_yaml(self, *filename):
-        return yaml.load_all(open(self.path(*filename)))
+        return yaml.load_all(self.open(*filename))
