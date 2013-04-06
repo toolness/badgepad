@@ -12,6 +12,24 @@ class Bunch:
     def __init__(self, *args, **kwargs):
         self.__dict__.update(kwargs)
 
+class BadgeAssertions(object):
+    def __init__(self, project):
+        self.project = project
+
+    def __iter__(self):
+        for filename in self.project.glob('assertions', '*.yml'):
+            yield BadgeAssertion(self.project, filename)
+
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError(key)
+        return BadgeAssertion(self.project,
+                              self.project.path('assertions', '%s.yml' % key))
+
+    def __contains__(self, key):
+        return self.project.exists('assertions', '%s.yml' % key)
+
+
 class BadgeAssertion(object):
     def __init__(self, project, filename):
         self.project = project
@@ -110,6 +128,7 @@ class Project(object):
         self.TEMPLATES_DIR = self.path('templates')
         self.__config = None
         self.badges = BadgeClasses(self)
+        self.assertions = BadgeAssertions(self)
 
     def relpath(self, *filename):
         return os.path.relpath(self.path(*filename), self.ROOT)
@@ -133,11 +152,6 @@ class Project(object):
         self.config['issuer']['url'] = url
         if not self.config['issuer']['url'].endswith('/'):
             self.config['issuer']['url'] += '/'
-
-    @property
-    def assertions(self):
-        for filename in self.glob('assertions', '*.yml'):
-            yield BadgeAssertion(self, filename)
 
     @property
     def config(self):

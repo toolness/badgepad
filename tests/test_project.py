@@ -8,6 +8,16 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 SAMPLE_PROJECT = path('sample-project')
 
 class ProjectTests(unittest.TestCase):
+    def testIssuedOnInheritsFromYaml(self):
+        proj = Project(SAMPLE_PROJECT)
+        issuedOn = proj.assertions['bar.no-img'].json['issuedOn']
+        self.assertEqual(issuedOn, 'i am a custom timestamp')
+
+    def testIssuedOnIsUnixTimestampByDefault(self):
+        proj = Project(SAMPLE_PROJECT)
+        issuedOn = proj.assertions['foo.no-img'].json['issuedOn']
+        self.assertTrue(isinstance(issuedOn, int))
+
     def testRecipientsAreParsed(self):
         proj = Project(SAMPLE_PROJECT)
         self.assertEqual(proj.config['recipients']['foo'].name, 'Foo')
