@@ -2,4 +2,6 @@ issuer:
   url: http://foo.org
 recipients:
   foo: Foo <foo@bar.org>
-  bar: Bar <bar@foo.org>
+  bar: Bar <bar@bar.org>
+  baz: Baz <baz@bar.org>
+  quux: Quux <quux@bar.org>
