@@ -29,6 +29,10 @@ class BadgeAssertions(object):
     def __contains__(self, key):
         return self.project.exists('assertions', '%s.yml' % key)
 
+    def find(self, recipient='*', badge='*'):
+        query = '%s.%s.yml' % (recipient, badge)
+        for filename in self.project.glob('assertions', query):
+            yield BadgeAssertion(self.project, filename)
 
 class BadgeAssertion(object):
     def __init__(self, project, filename):

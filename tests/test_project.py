@@ -17,6 +17,33 @@ class BadgeClassTests(unittest.TestCase):
         self.assertEqual(proj.badges['img'].json['image'],
                          'http://foo.org/badges/img.png')
 
+class FindBadgeAssertionTests(unittest.TestCase):
+    def testFindByRecipientAndBadgeWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.assertions.find(recipient='foo',
+                                                   badge='no-img')]
+        self.assertEqual(len(results), 1)
+
+    def testFindByRecipientWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.assertions.find(recipient='foo')]
+        self.assertEqual(len(results), 2)
+
+    def testFindByRecipientWorksWithNoResults(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.assertions.find(recipient='zzz')]
+        self.assertEqual(len(results), 0)
+
+    def testFindByBadgeWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.assertions.find(badge='no-img')]
+        self.assertEqual(len(results), 4)
+
+    def testFindByBadgeWorksWithNoResults(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.assertions.find(badge='zzz')]
+        self.assertEqual(len(results), 0)
+
 class BadgeAssertionTests(unittest.TestCase):
     def testYamlWithoutMetadataWorks(self):
         proj = Project(SAMPLE_PROJECT)
