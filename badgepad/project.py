@@ -2,11 +2,10 @@ import os
 import glob
 import urlparse
 import email.utils
+from hashlib import sha256
 
 import yaml
 from markdown import markdown
-
-from .obi import hashed_id
 
 class Recipient(object):
     def __init__(self, project, id, name, email):
@@ -18,6 +17,12 @@ class Recipient(object):
     @property
     def assertions(self):
         return self.project.assertions.find(recipient=self.id)
+
+    def hashed_identity(self, salt):
+        idobj = dict(type='email', hashed=True)
+        idobj['salt'] = salt
+        idobj['identity'] = 'sha256$' + sha256(self.email + salt).hexdigest()
+        return idobj
 
 class BadgeAssertion(object):
     def __init__(self, project, filename):
@@ -43,7 +48,7 @@ class BadgeAssertion(object):
         json['badge'] = self.badge_class.json_url
         if 'issuedOn' not in json:
             json['issuedOn'] = int(os.stat(filename).st_ctime)
-        json['recipient'] = hashed_id(self.recipient.email, self.basename)
+        json['recipient'] = self.recipient.hashed_identity(self.basename)
         json['evidence'] = project.absurl(*self.paths['html'])
         json['verify'] = {
             'type': 'hosted',

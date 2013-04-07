@@ -102,12 +102,26 @@ class BadgeAssertionTests(unittest.TestCase):
         issuedOn = proj.assertions['foo.no-img'].json['issuedOn']
         self.assertTrue(isinstance(issuedOn, int))
 
-class ConfigTests(unittest.TestCase):
+class RecipientTests(unittest.TestCase):
     def testRecipientsAreParsed(self):
         proj = Project(SAMPLE_PROJECT)
-        self.assertTrue('recipients' not in proj.config)
         self.assertEqual(proj.recipients['foo'].name, 'Foo')
         self.assertEqual(proj.recipients['foo'].email, 'foo@bar.org')
+
+    def testHashedIdentityWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        self.assertEqual(proj.recipients['foo'].hashed_identity('meh'), {
+            'type': 'email',
+            'hashed': True,
+            'salt': 'meh',
+            'identity': 'sha256$b15d735de6ae2152a80de7bdc76eb26215593848' \
+                        'cc55ea2c4263b48b9737a9a3'
+        })
+
+class ConfigTests(unittest.TestCase):
+    def testRecipientsAreNotInConfig(self):
+        proj = Project(SAMPLE_PROJECT)
+        self.assertTrue('recipients' not in proj.config)
 
     def testSetBaseUrlAddsSlash(self):
         proj = Project(SAMPLE_PROJECT)
