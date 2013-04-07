@@ -1,9 +1,11 @@
 import os
+import sys
 import hashlib
 import threading
 import time
 import shutil
 import tempfile
+import traceback
 import SimpleHTTPServer
 import SocketServer
 
@@ -40,8 +42,12 @@ def start_auto_rebuild_server(root_dir, ip, port):
                 laststate = currstate
                 project = Project(root_dir)
                 print "rebuilding website... ",
-                build_website(project, dest_dir=dirname)
-                print "done."
+                sys.stdout.flush()
+                try:
+                    build_website(project, dest_dir=dirname)
+                    print "done."
+                except Exception:
+                    traceback.print_exc()
                 os.chdir(dirname)
             time.sleep(1)
     finally:
