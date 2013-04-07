@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>{{ badge.name|e }} issued to {{ recipient.name|e }}</title>
-<h1>{{ badge.name|e }}</h1>
-<h2><span class="muted">Issued to </span>{{ recipient.name|e }}</h2>
-{{ evidenceHtml }}
+<title>{{ assertion.badge.name|e }} issued to {{ assertion.recipient.name|e }}</title>
+<h1>{{ assertion.badge.name|e }}</h1>
+<h2><span class="muted">Issued to </span>{{ assertion.recipient.name|e }}</h2>
+{{ assertion.evidence_html }}
 <button onclick="pushToBackpack()">Push to backpack</button>
 <script src="http://beta.openbadges.org/issuer.js"></script>
 <script>
 function pushToBackpack() {
-  OpenBadges.issue(["{{ verify.url }}"], function(errors, successes) {});
+  OpenBadges.issue(["{{ assertion.json_url }}"], function(errors, successes) {});
 }
 </script>

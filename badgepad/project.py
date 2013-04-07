@@ -36,6 +36,8 @@ class BadgeAssertion(object):
             'html': ('assertions', recipient, '%s.html' % badge),
             'json': ('assertions', recipient, '%s.json' % badge),
         }
+        self.evidence_url = project.absurl(*self.paths['html'])
+        self.json_url = project.absurl(*self.paths['json'])
 
         data = project.read_yaml(filename)
         try:
@@ -44,30 +46,30 @@ class BadgeAssertion(object):
         except StopIteration:
             self.evidence_markdown = json
             json = {}
+
+        if not self.evidence_markdown:
+            self.evidence_url = None
+        else:
+            json['evidence'] = self.evidence_url
+
         json['uid'] = self.basename
         json['badge'] = self.badge.json_url
         if 'issuedOn' not in json:
             json['issuedOn'] = int(os.stat(filename).st_ctime)
         json['recipient'] = self.recipient.hashed_identity(self.basename)
-        json['evidence'] = project.absurl(*self.paths['html'])
         json['verify'] = {
             'type': 'hosted',
-            'url': project.absurl(*self.paths['json'])
+            'url': self.json_url
         }
         self.json = json
-        self.__context = None
+        self.__evidence_html = None
 
     @property
-    def context(self):
-        if not self.__context:
-            ctx = {}
-            ctx.update(self.json)
-            ctx['evidenceHtml'] = markdown(self.evidence_markdown,
-                                           output_format='html5')
-            ctx['badge'] = self.badge.context
-            ctx['recipient'] = self.recipient
-            self.__context = ctx
-        return self.__context
+    def evidence_html(self):
+        if self.evidence_markdown and (not self.__evidence_html):
+            self.__evidence_html = markdown(self.evidence_markdown,
+                                            output_format='html5')
+        return self.__evidence_html
 
 class BadgeClass(object):
     def __init__(self, project, filename):
@@ -79,30 +81,34 @@ class BadgeClass(object):
             'html': ('badges', '%s.html' % self.basename),
             'json': ('badges', '%s.json' % self.basename)
         }
-        self.img_filename = project.path(*self.paths['png'])
+        self.image_filename = project.path(*self.paths['png'])
+        self.image_url = project.absurl(*self.paths['png'])
+        self.issuer = project.config['issuer']
+        self.criteria_url = project.absurl(*self.paths['html'])
 
         data = project.read_yaml(filename)
         json = data.next()
-        if os.path.exists(self.img_filename):
-            json['image'] = project.absurl(*self.paths['png'])
+        if os.path.exists(self.image_filename):
+            json['image'] = self.image_url
+        else:
+            self.image_filename = None
+            self.image_url = None
         json['issuer'] = project.absurl('issuer.json')
-        json['criteria'] = project.absurl(*self.paths['html'])
+        json['criteria'] = self.criteria_url
         self.json_url = project.absurl(*self.paths['json'])
         self.json = json
+        self.name = json.get('name')
+        self.description = json.get('description')
 
         self.criteria_markdown = data.next()
-        self.__context = None
+        self.__criteria_html = None
 
     @property
-    def context(self):
-        if not self.__context:
-            ctx = {}
-            ctx.update(self.json)
-            ctx['criteriaHtml'] = markdown(self.criteria_markdown,
-                                           output_format='html5')
-            ctx['url'] = self.json_url
-            self.__context = ctx
-        return self.__context        
+    def criteria_html(self):
+        if not self.__criteria_html:
+            self.__criteria_html = markdown(self.criteria_markdown,
+                                            output_format='html5')
+        return self.__criteria_html
 
     @property
     def assertions(self):

@@ -15,12 +15,22 @@ class BadgeClassTests(unittest.TestCase):
         proj = Project(SAMPLE_PROJECT)
         self.assertRaises(KeyError, getitem, proj.badges, 'zzz')
 
+    def testNameAndDescriptionAreInherited(self):
+        proj = Project(SAMPLE_PROJECT)
+        self.assertEqual(proj.badges['no-img'].name, 'No Image')
+        self.assertEqual(proj.badges['no-img'].description,
+                         'This badge has no image associated with it.\n')
+
     def testWithoutImageWorks(self):
         proj = Project(SAMPLE_PROJECT)
+        self.assertEqual(proj.badges['no-img'].image_url, None)
+        self.assertEqual(proj.badges['no-img'].image_filename, None)
         self.assertTrue('image' not in proj.badges['no-img'].json)
 
     def testWithImageWorks(self):
         proj = Project(SAMPLE_PROJECT)
+        self.assertTrue(proj.badges['img'].image_url)
+        self.assertTrue(proj.badges['img'].image_filename)
         self.assertEqual(proj.badges['img'].json['image'],
                          'http://foo.org/badges/img.png')
 
@@ -84,7 +94,10 @@ class BadgeAssertionTests(unittest.TestCase):
         proj = Project(SAMPLE_PROJECT)
         a = proj.assertions['baz.no-img']
         self.assertTrue(a.json)
+        self.assertTrue('evidence' not in a.json)
+        self.assertEqual(a.evidence_url, None)
         self.assertEqual(a.evidence_markdown, None)
+        self.assertEqual(a.evidence_html, None)
 
     def testYamlWithMetadataButNoEvidenceWorks(self):
         proj = Project(SAMPLE_PROJECT)

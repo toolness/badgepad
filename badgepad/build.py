@@ -22,17 +22,17 @@ def export_assertions(project, jinja_env, base_dest_dir):
     template = jinja_env.get_template('assertion.html')
     for assn in project.assertions:
         write_data(assn.json, base_dest_dir, *assn.paths['json'])
-        evidence_html = template.render(**assn.context)
+        evidence_html = template.render(assertion=assn)
         write_data(evidence_html, base_dest_dir, *assn.paths['html'])
 
 def export_badge_classes(project, jinja_env, base_dest_dir):
     template = jinja_env.get_template('badge.html')
     for badge in project.badges:
         write_data(badge.json, base_dest_dir, *badge.paths['json'])
-        criteria_html = template.render(**badge.context)
+        criteria_html = template.render(badge=badge)
         write_data(criteria_html, base_dest_dir, *badge.paths['html'])
-        if 'image' in badge.json:
-            shutil.copy(badge.img_filename,
+        if badge.image_url:
+            shutil.copy(badge.image_filename,
                         os.path.join(base_dest_dir, *badge.paths['png']))
 
 def build_website(project, dest_dir):
