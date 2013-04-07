@@ -8,9 +8,16 @@ from markdown import markdown
 
 from .obi import hashed_id
 
-class Bunch:
-    def __init__(self, *args, **kwargs):
-        self.__dict__.update(kwargs)
+class Recipient(object):
+    def __init__(self, project, id, name, email):
+        self.project = project
+        self.id = id
+        self.name = name
+        self.email = email
+
+    @property
+    def assertions(self):
+        return self.project.assertions.find(recipient=self.id)
 
 class BadgeAssertions(object):
     def __init__(self, project):
@@ -40,7 +47,7 @@ class BadgeAssertion(object):
         self.filename = filename
         self.basename = os.path.basename(os.path.splitext(filename)[0])
         recipient, badge_class = self.basename.split('.')
-        self.recipient = project.config['recipients'][recipient]
+        self.recipient = project.recipients[recipient]
         self.badge_class = project.badges[badge_class]
         self.paths = {
             'html': ('assertions', recipient, '%s.html' % badge_class),
@@ -131,6 +138,10 @@ class BadgeClass(object):
             self.__context = ctx
         return self.__context        
 
+    @property
+    def assertions(self):
+        return self.project.assertions.find(badge=self.basename)
+
 class Project(object):
     def __init__(self, root_dir):
         self.ROOT = os.path.abspath(root_dir)
@@ -139,6 +150,7 @@ class Project(object):
         self.ASSERTIONS_DIR = self.path('assertions')
         self.TEMPLATES_DIR = self.path('templates')
         self.__config = None
+        self.__recipients = None
         self.badges = BadgeClasses(self)
         self.assertions = BadgeAssertions(self)
 
@@ -167,16 +179,26 @@ class Project(object):
             self.config['issuer']['url'] += '/'
 
     @property
+    def recipients(self):
+        if self.__recipients is None:
+            # This triggers the setting of self.__recipients.
+            self.config
+        return self.__recipients
+
+    @property
     def config(self):
         if not self.__config:
             config = yaml.load(self.open('config.yml').read())
 
-            for recipient, address in config['recipients'].items():
+            recipients = {}
+            for slug, address in config['recipients'].items():
                 parts = email.utils.parseaddr(address)
-                config['recipients'][recipient] = Bunch(name=parts[0],
-                                                        email=parts[1])
+                recipient = Recipient(self, slug, parts[0], parts[1])
+                recipients[slug] = recipient
+            del config['recipients']
 
             self.__config = config
+            self.__recipients = recipients
             self.set_base_url(config['issuer']['url'])
 
         return self.__config

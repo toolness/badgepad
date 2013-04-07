@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from badgepad.project import Project
+from badgepad.project import Project, BadgeAssertion
 
 path = lambda *x: os.path.join(ROOT, *x)
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +18,18 @@ class BadgeClassTests(unittest.TestCase):
                          'http://foo.org/badges/img.png')
 
 class FindBadgeAssertionTests(unittest.TestCase):
+    def testRecipientAssertionsWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.recipients['foo'].assertions]
+        self.assertEqual(len(results), 2)
+        self.assertTrue(isinstance(results[0], BadgeAssertion))
+
+    def testBadgeClassAssertionsWorks(self):
+        proj = Project(SAMPLE_PROJECT)
+        results = [a for a in proj.badges['img'].assertions]
+        self.assertEqual(len(results), 1)
+        self.assertTrue(isinstance(results[0], BadgeAssertion))
+
     def testFindByRecipientAndBadgeWorks(self):
         proj = Project(SAMPLE_PROJECT)
         results = [a for a in proj.assertions.find(recipient='foo',
@@ -82,9 +94,9 @@ class BadgeAssertionTests(unittest.TestCase):
 class ConfigTests(unittest.TestCase):
     def testRecipientsAreParsed(self):
         proj = Project(SAMPLE_PROJECT)
-        self.assertEqual(proj.config['recipients']['foo'].name, 'Foo')
-        self.assertEqual(proj.config['recipients']['foo'].email,
-                         'foo@bar.org')
+        self.assertTrue('recipients' not in proj.config)
+        self.assertEqual(proj.recipients['foo'].name, 'Foo')
+        self.assertEqual(proj.recipients['foo'].email, 'foo@bar.org')
 
     def testSetBaseUrlAddsSlash(self):
         proj = Project(SAMPLE_PROJECT)

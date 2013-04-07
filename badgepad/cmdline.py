@@ -126,7 +126,7 @@ def cmd_issue(project, args):
         log("The badge '%s' does not exist." % args.badge)
         sys.exit(1)
 
-    if args.recipient not in project.config['recipients']:
+    if args.recipient not in project.recipients:
         log("The recipient '%s' does not exist." % args.recipient)
         sys.exit(1)
 
