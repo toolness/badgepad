@@ -19,28 +19,6 @@ class Recipient(object):
     def assertions(self):
         return self.project.assertions.find(recipient=self.id)
 
-class BadgeAssertions(object):
-    def __init__(self, project):
-        self.project = project
-
-    def __iter__(self):
-        for filename in self.project.glob('assertions', '*.yml'):
-            yield BadgeAssertion(self.project, filename)
-
-    def __getitem__(self, key):
-        if key not in self:
-            raise KeyError(key)
-        return BadgeAssertion(self.project,
-                              self.project.path('assertions', '%s.yml' % key))
-
-    def __contains__(self, key):
-        return self.project.exists('assertions', '%s.yml' % key)
-
-    def find(self, recipient='*', badge='*'):
-        query = '%s.%s.yml' % (recipient, badge)
-        for filename in self.project.glob('assertions', query):
-            yield BadgeAssertion(self.project, filename)
-
 class BadgeAssertion(object):
     def __init__(self, project, filename):
         self.project = project
@@ -86,23 +64,6 @@ class BadgeAssertion(object):
             self.__context = ctx
         return self.__context
 
-class BadgeClasses(object):
-    def __init__(self, project):
-        self.project = project
-
-    def __iter__(self):
-        for filename in self.project.glob('badges', '*.yml'):
-            yield BadgeClass(self.project, filename)
-
-    def __getitem__(self, key):
-        if key not in self:
-            raise KeyError(key)
-        return BadgeClass(self.project,
-                          self.project.path('badges', '%s.yml' % key))
-
-    def __contains__(self, key):
-        return self.project.exists('badges', '%s.yml' % key)
-
 class BadgeClass(object):
     def __init__(self, project, filename):
         self.project = project
@@ -141,6 +102,39 @@ class BadgeClass(object):
     @property
     def assertions(self):
         return self.project.assertions.find(badge=self.basename)
+
+class YamlCollection(object):
+    DIRNAME = None
+    CLASS = None
+
+    def __init__(self, project):
+        self.project = project
+
+    def __iter__(self):
+        for filename in self.project.glob(self.DIRNAME, '*.yml'):
+            yield self.CLASS(self.project, filename)
+
+    def __getitem__(self, key):
+        if key not in self:
+            raise KeyError(key)
+        return self.CLASS(self.project,
+                          self.project.path(self.DIRNAME, '%s.yml' % key))
+
+    def __contains__(self, key):
+        return self.project.exists(self.DIRNAME, '%s.yml' % key)
+
+class BadgeAssertions(YamlCollection):
+    DIRNAME = 'assertions'
+    CLASS = BadgeAssertion
+
+    def find(self, recipient='*', badge='*'):
+        query = '%s.%s.yml' % (recipient, badge)
+        for filename in self.project.glob('assertions', query):
+            yield BadgeAssertion(self.project, filename)
+
+class BadgeClasses(YamlCollection):
+    DIRNAME = 'badges'
+    CLASS = BadgeClass
 
 class Project(object):
     def __init__(self, root_dir):
