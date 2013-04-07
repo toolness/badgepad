@@ -29,12 +29,12 @@ class BadgeAssertion(object):
         self.project = project
         self.filename = filename
         self.basename = os.path.basename(os.path.splitext(filename)[0])
-        recipient, badge_class = self.basename.split('.')
+        recipient, badge = self.basename.split('.')
         self.recipient = project.recipients[recipient]
-        self.badge_class = project.badges[badge_class]
+        self.badge = project.badges[badge]
         self.paths = {
-            'html': ('assertions', recipient, '%s.html' % badge_class),
-            'json': ('assertions', recipient, '%s.json' % badge_class),
+            'html': ('assertions', recipient, '%s.html' % badge),
+            'json': ('assertions', recipient, '%s.json' % badge),
         }
 
         data = project.read_yaml(filename)
@@ -45,7 +45,7 @@ class BadgeAssertion(object):
             self.evidence_markdown = json
             json = {}
         json['uid'] = self.basename
-        json['badge'] = self.badge_class.json_url
+        json['badge'] = self.badge.json_url
         if 'issuedOn' not in json:
             json['issuedOn'] = int(os.stat(filename).st_ctime)
         json['recipient'] = self.recipient.hashed_identity(self.basename)
@@ -64,7 +64,7 @@ class BadgeAssertion(object):
             ctx.update(self.json)
             ctx['evidenceHtml'] = markdown(self.evidence_markdown,
                                            output_format='html5')
-            ctx['badge'] = self.badge_class.context
+            ctx['badge'] = self.badge.context
             ctx['recipient'] = self.recipient
             self.__context = ctx
         return self.__context
