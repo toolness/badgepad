@@ -15,6 +15,10 @@ class BadgeClassTests(unittest.TestCase):
         proj = Project(SAMPLE_PROJECT)
         self.assertRaises(KeyError, getitem, proj.badges, 'zzz')
 
+    def testIssuerIsInherited(self):
+        proj = Project(SAMPLE_PROJECT)
+        self.assertEqual(proj.badges['img'].issuer['name'], 'Foo')
+
     def testNameAndDescriptionAreInherited(self):
         proj = Project(SAMPLE_PROJECT)
         self.assertEqual(proj.badges['no-img'].name, 'No Image')
