@@ -7,6 +7,15 @@ from .project import Project
 from .build import build_website
 from .server import start_auto_rebuild_server
 
+def require_project(fn):
+    def wrapper(project, args):
+        if not project.exists('config.yml'):
+            log('This directory does not appear to contain a project.')
+            sys.exit(1)
+        fn(project, args)
+    wrapper.__doc__ = fn.__doc__
+    return wrapper
+
 def log(text):
     sys.stdout.write(text + '\n')
 
@@ -15,6 +24,7 @@ def pkg_path(*args):
 
 PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+@require_project
 def cmd_serve(project, args):
     """
     Serve website.
@@ -22,6 +32,7 @@ def cmd_serve(project, args):
 
     start_auto_rebuild_server(project.ROOT, ip=args.ip, port=args.port)
 
+@require_project
 def cmd_build(project, args):
     """
     Build website.
@@ -55,6 +66,7 @@ def cmd_init(project, args):
 
     log("Done.")
 
+@require_project
 def cmd_newbadge(project, args):
     """
     Create a new badge type.
@@ -71,6 +83,7 @@ def cmd_newbadge(project, args):
     pngfile = project.relpath('badges', '%s.png' % args.name)
     log("To give the badge an image, copy a PNG file to %s." % pngfile)
 
+@require_project
 def cmd_issue(project, args):
     """
     Issue a badge to a recipient.
