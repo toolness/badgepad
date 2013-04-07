@@ -1,12 +1,10 @@
 import os
 import sys
 import shutil
-import json
 import argparse
 
-import jinja2
-
 from .project import Project
+from .build import build_website
 
 def log(text):
     sys.stdout.write(text + '\n')
@@ -16,64 +14,15 @@ def pkg_path(*args):
 
 PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-def write_data(data, *filename):
-    abspath = os.path.join(*filename)
-    dirname = os.path.dirname(abspath)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-    f = open(abspath, 'w')
-    if abspath.endswith('.json'):
-        json.dump(data, f, sort_keys=True, indent=True)
-    else:
-        if isinstance(data, unicode):
-            data = data.encode('utf-8')
-        f.write(data)
-    f.close()
-
-def export_assertions(project, jinja_env, base_dest_dir):
-    template = jinja_env.get_template('assertion.html')
-    for assn in project.assertions:
-        write_data(assn.json, base_dest_dir, *assn.paths['json'])
-        evidence_html = template.render(**assn.context)
-        write_data(evidence_html, base_dest_dir, *assn.paths['html'])
-
-def export_badge_classes(project, jinja_env, base_dest_dir):
-    template = jinja_env.get_template('badge.html')
-    for badge in project.badges:
-        write_data(badge.json, base_dest_dir, *badge.paths['json'])
-        criteria_html = template.render(**badge.context)
-        write_data(criteria_html, base_dest_dir, *badge.paths['html'])
-        if 'image' in badge.json:
-            shutil.copy(badge.img_filename,
-                        os.path.join(base_dest_dir, *badge.paths['png']))
-
 def cmd_build(project, args):
     """
     Build website.
     """
 
-    loader = jinja2.FileSystemLoader(project.TEMPLATES_DIR)
-    env = jinja2.Environment(loader=loader)
-    dest_dir = project.path('dist')
-
     if args.base_url:
         project.set_base_url(args.base_url)
 
-    if os.path.exists(dest_dir):
-        log("Removing %s." % dest_dir)
-        shutil.rmtree(dest_dir)
-
-    log("Copying static files.")
-    shutil.copytree(project.STATIC_DIR, dest_dir)
-
-    write_data(project.config['issuer'], dest_dir, 'issuer.json')
-
-    log("Exporting badge classes.")
-    export_badge_classes(project, env, dest_dir)
-
-    log("Exporting assertions.")
-    export_assertions(project, env, dest_dir)
-
+    build_website(project, dest_dir=project.path('dist'))
     log("Done. Static website is in the '%s' dir." % project.relpath('dist'))
 
 def cmd_init(project, args):
