@@ -5,6 +5,7 @@ import argparse
 
 from .project import Project
 from .build import build_website
+from .server import start_auto_rebuild_server
 
 def log(text):
     sys.stdout.write(text + '\n')
@@ -13,6 +14,13 @@ def pkg_path(*args):
     return os.path.join(PKG_ROOT, *args)
 
 PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+def cmd_serve(project, args):
+    """
+    Serve website.
+    """
+
+    start_auto_rebuild_server(project.ROOT, ip=args.ip, port=args.port)
 
 def cmd_build(project, args):
     """
@@ -93,6 +101,12 @@ def main(arglist=None):
                         default='.')
 
     subparsers = parser.add_subparsers()
+
+    serve = subparsers.add_parser('serve', help=cmd_serve.__doc__)
+    serve.add_argument('-i', '--ip', help='ip address',
+                       default='127.0.0.1')
+    serve.add_argument('-p', '--port', help='port', type=int, default=8000)
+    serve.set_defaults(func=cmd_serve)
 
     build = subparsers.add_parser('build', help=cmd_build.__doc__)
     build.add_argument('-u', '--base-url', help='alternate base URL')
