@@ -7,6 +7,7 @@ urlmap:
   badge: /badges/:badge.json
   criteria: /badges/:badge.html
   image: /badges/:badge.png
+  issuer: /issuer.json
 recipients:
   foo: Foo <foo@bar.org>
   bar: Bar <bar@bar.org>

@@ -47,6 +47,6 @@ def build_website(project, dest_dir):
         shutil.rmtree(dest_dir)
     if os.path.exists(project.STATIC_DIR):
         shutil.copytree(project.STATIC_DIR, dest_dir)
-    write_data(project.config['issuer'], dest_dir, 'issuer.json')
+    write_data(project.config['issuer'], dest_dir, *project.paths['json'])
     export_badge_classes(project, env, dest_dir)
     export_assertions(project, env, dest_dir)

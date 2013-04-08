@@ -114,7 +114,7 @@ class BadgeClass(object):
         else:
             self.image_filename = None
             self.image_url = None
-        json['issuer'] = project.absurl('issuer.json')
+        json['issuer'] = project.absurl(*project.paths['json'])
         json['criteria'] = self.criteria_url
         self.json_url = project.absurl(*self.paths['json'])
         self.json = json
@@ -210,6 +210,10 @@ class Project(object):
             # This triggers the setting of self.__recipients.
             self.config
         return self.__recipients
+
+    @property
+    def paths(self):
+        return {'json': pathify(self.config['urlmap']['issuer'])}
 
     @property
     def config(self):
