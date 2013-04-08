@@ -1,6 +1,12 @@
 issuer:
   name: Foo
   url: http://foo.org
+urlmap:
+  assertion: /assertions/:recipient/:badge.json
+  evidence: /assertions/:recipient/:badge.html
+  badge: /badges/:badge.json
+  criteria: /badges/:badge.html
+  image: /badges/:badge.png
 recipients:
   foo: Foo <foo@bar.org>
   bar: Bar <bar@bar.org>

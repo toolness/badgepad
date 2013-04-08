@@ -1,11 +1,17 @@
 import os
+import doctest
 import unittest
 
-from badgepad.project import Project, BadgeAssertion
+import badgepad.project
+from badgepad.project import Project, BadgeAssertion, pathify
 
 path = lambda *x: os.path.join(ROOT, *x)
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SAMPLE_PROJECT = path('sample-project')
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(badgepad.project))
+    return tests
 
 def getitem(obj, key):
     return obj[key]

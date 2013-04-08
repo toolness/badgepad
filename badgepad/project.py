@@ -2,10 +2,26 @@ import os
 import glob
 import urlparse
 import email.utils
+import re
 from hashlib import sha256
 
 import yaml
 from markdown import markdown
+
+def pathify(urlpattern, **context):
+    """
+    Converts a url pattern-esque string into a path, given a context
+    dict, and splits the result.
+
+    Example:
+
+        >>> pathify('/a/:foo/:bar.xml', foo='beets', bar='eggs')
+        ('a', 'beets', 'eggs.xml')
+    """
+
+    repl = lambda match: context[match.group(1)]
+    path = re.sub(r':([a-z]+)', repl, urlpattern)
+    return tuple(path[1:].split('/'))
 
 class Recipient(object):
     def __init__(self, project, id, name, email):
@@ -33,8 +49,10 @@ class BadgeAssertion(object):
         self.recipient = project.recipients[recipient]
         self.badge = project.badges[badge]
         self.paths = {
-            'html': ('assertions', recipient, '%s.html' % badge),
-            'json': ('assertions', recipient, '%s.json' % badge),
+            'html': pathify(project.config['urlmap']['evidence'],
+                            recipient=recipient, badge=badge),
+            'json': pathify(project.config['urlmap']['assertion'],
+                            recipient=recipient, badge=badge),
         }
         self.evidence_url = project.absurl(*self.paths['html'])
         self.json_url = project.absurl(*self.paths['json'])
@@ -77,11 +95,14 @@ class BadgeClass(object):
         self.filename = filename
         self.basename = os.path.basename(os.path.splitext(filename)[0])
         self.paths = {
-            'png': ('badges', '%s.png' % self.basename),
-            'html': ('badges', '%s.html' % self.basename),
-            'json': ('badges', '%s.json' % self.basename)
+            'png': pathify(project.config['urlmap']['image'],
+                           badge=self.basename),
+            'html': pathify(project.config['urlmap']['criteria'],
+                            badge=self.basename),
+            'json': pathify(project.config['urlmap']['badge'],
+                            badge=self.basename)
         }
-        self.image_filename = project.path(*self.paths['png'])
+        self.image_filename = os.path.splitext(filename)[0] + '.png'
         self.image_url = project.absurl(*self.paths['png'])
         self.issuer = project.config['issuer']
         self.criteria_url = project.absurl(*self.paths['html'])
