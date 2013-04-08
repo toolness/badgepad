@@ -104,12 +104,8 @@ If you followed the quick start instructions above and want to work on
 badgepad itself, you can find its git repository at
 `.virtualenv/src/badgepad`.
 
-The test suite can be run with `python -m unittest discover` from the
+The test suite can be run with `python setup.py test` from the
 root of the repository.
-
-You can optionally `pip install coverage` and get test coverage results
-by first running `coverage run --source=badgepad -m unittest discover`,
-followed by `coverage report -m`.
 
   [Open Badges]: http://openbadges.org/
   [jekyll]: http://jekyllrb.com/

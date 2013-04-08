@@ -1,6 +1,6 @@
--e git+git@github.com:toolness/badgepad.git@5341afbffc0b5fb0a818ec3a4dd8664a20f14237#egg=Badgepad-dev
 Jinja2==2.6
 Markdown==2.3.1
 MiniMock==1.2.8
 PyYAML==3.10
+coverage==3.6
 wsgiref==0.1.2
