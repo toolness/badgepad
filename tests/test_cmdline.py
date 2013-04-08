@@ -53,7 +53,7 @@ def test_log():
 
     pass
 
-class BaseSmokeTest(unittest.TestCase):
+class BaseCmdlineTest(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp()
         self.old_log = badgepad.cmdline.log
@@ -79,14 +79,14 @@ class BaseSmokeTest(unittest.TestCase):
         self.assertTrue(os.path.exists(self.path(*args)),
                         'path %s should exist' % '/'.join(args))
 
-class SampleProjectTest(BaseSmokeTest):
+class SampleProjectTest(BaseCmdlineTest):
     def test(self):
         badgepad.cmdline.main(['--root-dir', SAMPLE_PROJECT, 'build',
                                '--output-dir', self.path('out')])
         self.assertPathExists('out', 'issuer.json')
         self.assertPathExists('out', 'badges', 'img.json')
 
-class ProjectFromScratchTest(BaseSmokeTest):
+class ProjectFromScratchTest(BaseCmdlineTest):
     def cmdline(self, *args):
         badgepad.cmdline.main(['--root-dir', self.dir] + list(args))
 
