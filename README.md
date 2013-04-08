@@ -86,7 +86,7 @@ $ badgepad build
 This should output your whole site to the `dist` directory. Deploy that
 and make sure it's located at the URL specified by `issuer.url` in your
 `config.yml`. Assuming that URL is `http://mybadges.com`, you can now
-give Bar Jones a link to `http://mybadges.com/assertions/bar.foo.html`,
+give Bar Jones a link to `http://mybadges.com/assertions/bar/foo.html`,
 where they will be able to see their badge and push it to their
 backpack.
 
