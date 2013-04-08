@@ -3,17 +3,23 @@ import sys
 import shutil
 import argparse
 
+from . import pkg_path
 from .project import Project
 from .build import build_website
 from .server import start_auto_rebuild_server
 
+def nice_dir(path, cwd=None):
+    if cwd is None:
+        cwd = os.getcwd()
+    path = os.path.realpath(path)
+    cwd = os.path.realpath(cwd)
+    rel = os.path.relpath(path, cwd)
+    if rel.startswith('..'):
+        return path
+    return rel
+
 def log(text):
     sys.stdout.write(text + '\n')
-
-def pkg_path(*args):
-    return os.path.join(PKG_ROOT, *args)
-
-PKG_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def cmd_serve(project, args):
     """
@@ -29,9 +35,11 @@ def cmd_build(project, args):
 
     if args.base_url:
         project.set_base_url(args.base_url)
+    if not args.output_dir:
+        args.output_dir = project.path('dist')
 
-    build_website(project, dest_dir=project.path('dist'))
-    log("Done. Static website is in the '%s' dir." % project.relpath('dist'))
+    build_website(project, dest_dir=args.output_dir)
+    log("Done. Static website is in '%s'." % nice_dir(args.output_dir))
 
 def cmd_init(project, args):
     """
@@ -110,6 +118,7 @@ def main(arglist=None):
 
     build = subparsers.add_parser('build', help=cmd_build.__doc__)
     build.add_argument('-u', '--base-url', help='alternate base URL')
+    build.add_argument('-o', '--output-dir', help='output directory')
     build.set_defaults(func=cmd_build)
 
     init = subparsers.add_parser('init', help=cmd_init.__doc__)

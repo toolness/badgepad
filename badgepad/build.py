@@ -4,6 +4,8 @@ import json
 
 import jinja2
 
+from . import pkg_path
+
 def write_data(data, *filename):
     abspath = os.path.join(*filename)
     dirname = os.path.dirname(abspath)
@@ -36,11 +38,15 @@ def export_badge_classes(project, jinja_env, base_dest_dir):
                         os.path.join(base_dest_dir, *badge.paths['png']))
 
 def build_website(project, dest_dir):
-    loader = jinja2.FileSystemLoader(project.TEMPLATES_DIR)
+    loader = jinja2.FileSystemLoader([
+        project.TEMPLATES_DIR,
+        pkg_path('samples', 'templates')
+    ])
     env = jinja2.Environment(loader=loader)
     if os.path.exists(dest_dir):
         shutil.rmtree(dest_dir)
-    shutil.copytree(project.STATIC_DIR, dest_dir)
+    if os.path.exists(project.STATIC_DIR):
+        shutil.copytree(project.STATIC_DIR, dest_dir)
     write_data(project.config['issuer'], dest_dir, 'issuer.json')
     export_badge_classes(project, env, dest_dir)
     export_assertions(project, env, dest_dir)
