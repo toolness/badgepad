@@ -63,3 +63,5 @@ class ProjectFromScratchTest(BaseSmokeTest):
         self.assertPathExists('dist', 'assertions', 'lol', 'foo.json')
         self.assertPathExists('dist', 'badges', 'foo.json')
         self.assertPathExists('dist', 'issuer.json')
+
+        self.cmdline('build')
