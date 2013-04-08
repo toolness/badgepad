@@ -2,8 +2,31 @@ import os
 import tempfile
 import shutil
 import unittest
+import doctest
+from minimock import mock, Mock, restore
 
+from badgepad import server
 from badgepad.server import get_dir_state
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite())
+    return tests
+
+def test_start_file_server_works():
+    """
+    >>> import SocketServer
+    >>> mock('SocketServer.TCPServer')
+    >>> SocketServer.TCPServer.mock_returns = Mock('httpd')
+    >>> server.start_file_server('127.0.0.1', 8000)       # doctest: +ELLIPSIS
+    Called SocketServer.TCPServer(
+        ('127.0.0.1', 8000),
+        <class SimpleHTTPServer.SimpleHTTPRequestHandler at ...>)
+    serving at port 8000 on 127.0.0.1
+    Called httpd.serve_forever()
+    >>> restore()
+    """
+
+    pass
 
 class ServerTests(unittest.TestCase):
     def testGetDirStateWorks(self):
