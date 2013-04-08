@@ -7,7 +7,6 @@ from minimock import mock, Mock, restore
 
 from badgepad import server
 from badgepad.server import get_dir_state
-from .test_project import SAMPLE_PROJECT
 
 def load_tests(loader, tests, ignore):
     tests.addTests(doctest.DocTestSuite())
@@ -15,31 +14,33 @@ def load_tests(loader, tests, ignore):
 
 def test_start_auto_rebuild_server():
     """
-    >>> mock('server.threading.Thread', returns=Mock('thread'))
-    >>> mock('server.time.sleep')
-    >>> mock('server.tempfile.mkdtemp', returns='temp')
-    >>> mock('server.os.chdir')
+    >>> import threading
+    >>> import time
+    >>> mock('threading.Thread', returns=Mock('thread'))
+    >>> mock('time.sleep')
+    >>> mock('tempfile.mkdtemp', returns='temp')
+    >>> mock('os.chdir')
     >>> mock('server.auto_rebuilder', returns=[1, 2])
-    >>> mock('server.shutil.rmtree')
-    >>> mock('server.os.path.exists', returns=True)
+    >>> mock('shutil.rmtree')
+    >>> mock('os.path.exists', returns=True)
 
     >>> server.start_auto_rebuild_server(
     ...     'root',
     ...     '127.0.0.1',
     ...     3000
     ... )                                                # doctest: +ELLIPSIS
-    Called server.tempfile.mkdtemp()
-    Called server.threading.Thread(
+    Called tempfile.mkdtemp()
+    Called threading.Thread(
         kwargs={'ip': '127.0.0.1', 'port': 3000},
         target=<function start_file_server at ...>)
     Called thread.start()
     Called server.auto_rebuilder('root', 'temp')
-    Called server.os.chdir('temp')
-    Called server.time.sleep(1)
-    Called server.os.chdir('temp')
-    Called server.time.sleep(1)
-    Called server.os.path.exists('temp')
-    Called server.shutil.rmtree('temp')
+    Called os.chdir('temp')
+    Called time.sleep(1)
+    Called os.chdir('temp')
+    Called time.sleep(1)
+    Called os.path.exists('temp')
+    Called shutil.rmtree('temp')
 
     >>> restore()
     """
