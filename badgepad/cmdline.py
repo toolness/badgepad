@@ -18,6 +18,10 @@ def nice_dir(path, cwd=None):
         return path
     return rel
 
+def fail(text):
+    log(text)
+    sys.exit(1)
+
 def log(text):
     sys.stdout.write(text + '\n')
 
@@ -47,8 +51,7 @@ def cmd_init(project, args):
     """
 
     if project.exists('config.yml'):
-        log("The current directory already contains a project.")
-        sys.exit(1)
+        fail("Directory already contains a project.")
 
     log("Generating config.yml.")
     shutil.copy(pkg_path('samples', 'config.yml'), project.ROOT)
@@ -70,8 +73,7 @@ def cmd_newbadge(project, args):
 
     filename = project.path('badges', '%s.yml' % args.name)
     if os.path.exists(filename):
-        log("That badge already exists.")
-        sys.exit(1)
+        fail("That badge already exists.")
 
     shutil.copy(pkg_path('samples', 'badge.yml'), filename)
     log("Created %s." % project.relpath(filename))
@@ -88,16 +90,13 @@ def cmd_issue(project, args):
     filename = project.path('assertions', '%s.yml' % basename)
 
     if not args.badge in project.badges:
-        log("The badge '%s' does not exist." % args.badge)
-        sys.exit(1)
+        fail("Badge '%s' does not exist." % args.badge)
 
     if args.recipient not in project.recipients:
-        log("The recipient '%s' does not exist." % args.recipient)
-        sys.exit(1)
+        fail("Recipient '%s' does not exist." % args.recipient)
 
     if os.path.exists(filename):
-        log("That badge has already been issued to that recipient.")
-        sys.exit(1)
+        fail("Badge already issued.")
 
     shutil.copy(pkg_path('samples', 'assertion.yml'), filename)
     log("Created %s." % project.relpath(filename))
@@ -138,7 +137,6 @@ def main(arglist=None):
 
     if args.func is not cmd_init:
         if not project.exists('config.yml'):
-            log('This directory does not appear to contain a project.')
-            sys.exit(1)
+            fail('Directory does not contain a project.')
 
     args.func(project, args)
