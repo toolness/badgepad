@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/toolness/badgepad.png?branch=master)](https://travis-ci.org/toolness/badgepad)
+
 This is a simple command-line tool to issue [Open Badges][] as static
 files that can be served from Apache, Amazon S3, or anything else that
 serves static content.
